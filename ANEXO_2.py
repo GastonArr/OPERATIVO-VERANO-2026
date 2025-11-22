@@ -144,12 +144,10 @@ def _guardar_por_unidad_anexo2(resultados: List[Dict]) -> int:
 def _resultado_vacio(vals: Dict) -> bool:
     """
     Consideramos un resultado "vacío" si:
-    - unidad, tipo_op, lugar, observ vacíos
+    - tipo_op, lugar y observ están vacíos
     - todos los números en 0
     - horas = 00:00
     """
-    if vals["unidad"].strip():
-        return False
     if vals["tipo_op"].strip():
         return False
     if vals["lugar"].strip():
@@ -283,6 +281,8 @@ def mostrar_anexo_2(ruta_excel: str, fecha_objetivo: date, fecha_default: date) 
     ruta_excel se ignora ahora (se usan archivos por unidad).
     """
 
+    unidad_actual = st.session_state.get("unidad_actual", "")
+
     # Fecha de los operativos que se cargan (día anterior a la fecha_objetivo)
     fecha_carga = fecha_objetivo - timedelta(days=1)
 
@@ -311,11 +311,12 @@ def mostrar_anexo_2(ruta_excel: str, fecha_objetivo: date, fecha_default: date) 
         st.markdown(f"#### Resultado {i + 1}")
         with st.container(border=True):
 
-            st.selectbox(
+            st.session_state[f"res_unidad_{i}"] = unidad_actual
+            st.text_input(
                 "Unidad",
-                ["", "comisaria 9", "comisaria 42", "DTCCO-PH"],
+                value=unidad_actual,
                 key=f"res_unidad_{i}",
-                format_func=lambda x: "Seleccione unidad" if x == "" else x,
+                disabled=True,
             )
 
             st.date_input(
@@ -488,6 +489,8 @@ def mostrar_anexo_2(ruta_excel: str, fecha_objetivo: date, fecha_default: date) 
                     f"Resultado {i+1}: Unidad '{vals['unidad']}' no tiene archivo configurado."
                 )
 
+            if not vals["tipo_op"].strip():
+                errores.append(f"Resultado {i+1}: Tipo de operativo es obligatorio.")
             if not vals["lugar"].strip():
                 errores.append(f"Resultado {i+1}: Lugar es obligatorio.")
 
@@ -506,6 +509,10 @@ def mostrar_anexo_2(ruta_excel: str, fecha_objetivo: date, fecha_default: date) 
                 errores.append(
                     f"Resultado {i+1}: las horas deben ser en números "
                     "redondos (minuto 00)."
+                )
+            if hd == time(0, 0) or hh == time(0, 0):
+                errores.append(
+                    f"Resultado {i+1}: las horas no pueden ser 00:00."
                 )
 
             resultados_a_guardar.append(vals)
