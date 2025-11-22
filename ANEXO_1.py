@@ -121,8 +121,6 @@ def _guardar_por_unidad_anexo1(diagramas: List[Dict]) -> int:
 # -------------------------------------------------------------------
 def _diagrama_vacio(vals: Dict) -> bool:
     """Determina si un diagrama está completamente vacío."""
-    if vals["unidad"].strip():
-        return False
     if vals["lugar"].strip():
         return False
     if vals["rec_hum"] != 0 or vals["rec_util"] != 0:
@@ -181,6 +179,7 @@ def mostrar_anexo1(ruta_excel: str, fecha_objetivo: date, fecha_default: date) -
     """
 
     fecha_diagrama = fecha_objetivo + timedelta(days=1)
+    unidad_actual = st.session_state.get("unidad_actual", "")
 
     if "anexo1_cant_diagramas" not in st.session_state:
         st.session_state["anexo1_cant_diagramas"] = 1
@@ -206,11 +205,12 @@ def mostrar_anexo1(ruta_excel: str, fecha_objetivo: date, fecha_default: date) -
         st.markdown(f"#### Diagrama {i + 1}")
         with st.container(border=True):
 
-            st.selectbox(
+            st.session_state[f"unidad_{i}"] = unidad_actual
+            st.text_input(
                 "Unidad",
-                ["", "comisaria 9", "comisaria 42", "DTCCO-PH"],
+                value=unidad_actual,
                 key=f"unidad_{i}",
-                format_func=lambda x: "Seleccione unidad" if x == "" else x,
+                disabled=True,
             )
 
             st.date_input(
